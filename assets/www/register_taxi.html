@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  	 <meta charset="utf-8" />
+        <meta name="format-detection" content="telephone=no" />
+      
+    	<title>Taxi Location</title>
+    	<link rel="stylesheet" href="lib/bootstrap/css/bootstrap.min.css">
+    	<link rel="stylesheet" href="lib/bootstrap/css/bootstrap-switch.css"> 
+  		<link rel="stylesheet" href="css/taxi.css">
+    	<script language="JavaScript" type="text/javascript" src="lib/jquery/jquery-1.10.2.min.js"></script>
+    	<script type="text/javascript" src="lib/bootstrap/js/bootstrap.min.js"></script>
+    	<script type="text/javascript" src="lib/bootstrap/js/bootstrap-switch.js"></script>
+    	<script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+    	<script type="text/javascript" src="backgroundService-3.1.0.js"></script>
+		<script type="text/javascript" src="myService-3.1.0.js"></script>
+		
+        <script type="text/javascript" >
+        	document.getElementById("device_uuid").defaultValue = device.uuid;
+		</script>
+	</head>
+  <body>
+  	<header class="bar-title">
+	  	<h1 class="title">Cab Register</h1>
+	</header>
+	<form role="form">
+    	<div class="form-group">
+		   <label for="Taxi_id_label">Cab Id</label>
+		   <input type="text" class="form-control" id="taxi_id" placeholder="Taxi Id">
+	    </div>
+	    <div class="form-group">
+		   <label for="Device_UUID_Label">Device UUID</label>
+		   <input type="text" class="form-control" id="device_uuid">
+	    </div>
+	    <div class="btn">
+	     <button type="submit" class="btn btn-primary" onclick="registerCab()">Save</button>
+	    </div>
+	  </form>
+	  
+	  <script>
+	  		function registerCab(){
+	  			var taxi_id = $("#taxi_id").val();
+    			var device_uuid = $("#device_uuid").val();
+	  			var param = {};
+	  			param["taxi_id"] = taxi_id;
+				param["uuid"] = device_uuid;
+				jQuery.ajax({
+					type: "POST",
+					dataType : 'json', 
+					url : "http://nuappz.com/taxi/lib/api/register_cab.inc.php",
+					data : param,
+					cache : false,
+					success : function(data1) {
+						alert("success");
+						window.location="index.html";
+					},
+					error : function(data1){
+						window.location="register_taxi.html";
+					}
+				});
+	  		}
+	  </script>
+  </body>
+</html>

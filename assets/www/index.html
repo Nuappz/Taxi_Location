@@ -4,228 +4,234 @@
   	 <meta charset="utf-8" />
         <meta name="format-detection" content="telephone=no" />
       
-    	<title>Device Properties Example</title>
-    	<script language="JavaScript" type="text/javascript" src="lib/jquery-1.10.2.min.js"></script>
-    <script type="text/javascript" charset="utf-8" src="cordova.js"></script>
-    <script type="text/javascript" src="backgroundService-3.1.0.js"></script>
-	<script type="text/javascript" src="myService-3.1.0.js"></script>
+    	<title>Taxi Location</title>
+    	<link rel="stylesheet" href="lib/bootstrap/css/bootstrap.min.css">
+    	<link rel="stylesheet" href="lib/bootstrap/css/bootstrap-switch.css"> 
+  		<link rel="stylesheet" href="css/taxi.css">
+    	<script language="JavaScript" type="text/javascript" src="lib/jquery/jquery-1.10.2.min.js"></script>
+    	<script type="text/javascript" src="lib/bootstrap/js/bootstrap.min.js"></script>
+    	<script type="text/javascript" src="lib/bootstrap/js/bootstrap-switch.js"></script>
+    	<script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+    	<script type="text/javascript" src="backgroundService-3.1.0.js"></script>
+		<script type="text/javascript" src="myService-3.1.0.js"></script>
 		
         <script type="text/javascript" >
-        	var myService = cordova.require('cordova/plugin/myService');
-        	
-        	document.addEventListener('deviceready', function() {
-				getStatus();
-  			}, true);
+        	$('#change-color-switch').bootstrapSwitch('setOnClass', 'success'; 'setAnimated', true);
+			$('#change-color-switch').bootstrapSwitch('setOffClass', 'danger');
+			var watchID=0;
+		</script>
+	</head>
+  <body>
+  	<header class="bar-title">
+	  	<h1 class="title">Cab Tracking</h1>
+	</header>
+	<form role="form" class="form-group">
+		 <div class="control-group">
+		   <label for="Device_UUID_Label">Device UUID</label>
+		   <input type="text" class="form-control" id="device_uuid" disabled>
+	    </div>
+	    <div class="control-group">
+	    	<label class="control-label" for="track_device">Track Device</label>
+	    	<div class="controls">
+		    	<span id="service_status" class="make-switch has-switch switch-large" data-on="danger" data-off="success" data-on-label="Stop" data-off-label="Track">
+			    	<input type="checkbox" checked>
+			    </span>
+			    <label id="device_current_status_text"></label>
+			</div>				 
+		</div></br>
+		<div class="control-group">
+			<label class="control-label" for="status">Taxi Status</label>
+			<div class="controls">
+	    		<span id="taxi_status" class="make-switch has-switch switch-large" data-on="danger" data-off="success" data-on-label="Vacant" data-off-label="Busy">
+		    	  <input type="checkbox" checked>
+		    	</span>
+		    	<label id="taxi_current_status_text"></label>
+			</div>
+		</div>
+	  </form>
+	  <script>
+	  		document.addEventListener("deviceready", onDeviceReady, false);
+	  		
+	  		function onDeviceReady(){
+	  		//	alert(device.uuid);
+	  			var param = {};
+				param["uuid"] = device.uuid;
+				var data1 = JSON.stringify([param]);
+			//		alert(data1);
+				jQuery.ajax({
+						type: "POST",
+						dataType : 'json', 
+						url : "http://nuappz.com/taxi/lib/api/checkuuid.inc.php",
+						data : param,
+						cache : false,
+						success : function(data) {
+							if(data === false){
+															
+							}else{
+								/*navigator.notification.confirm(
+							        'Your UUID is " + device.uuid + ". Please complete the registration process with Admin',  // message
+							         onConfirm,              // callback to invoke with index of button pressed
+							        'Register Your UUID',            // title
+							        'OK'          // buttonLabels
+							    );
+							    function onConfirm(button) {
+								    navigator.app.exitApp();
+								}*/
+								alert("Your UUID is " + device.uuid + ". Please complete the registration process with Admin");
+								navigator.app.exitApp();
+							}
+							document.getElementById("device_uuid").defaultValue = device.uuid;						
+						}
+					});
+			    document.addEventListener("backbutton", onBackKeyDown, false);
+			}
+			function onBackKeyDown(){
+			    alert("Press HOME To Go Out Of The App");
+			    return false;
+			}
+	  		
+	  		$('#service_status').bootstrapSwitch('setState', false);
+			$('#taxi_status').bootstrapSwitch('setState', false);
+			var status = $('#taxi_status').bootstrapSwitch('status');
+			var device_current_status = document.getElementById("device_current_status_text");
+			var taxi_current_status = document.getElementById("taxi_current_status_text");
+			taxi_current_status.innerHTML = "Cab is Vacant";
+			taxi_current_status.style.color = "green";
+			device_current_status.innerHTML = "Stopped Tracking";
+	    	device_current_status.style.color = "green";
 
- 			function handleSuccess(data) {
- 				updateView(data);
+		/*	alert("Initial Status");
+			alert(status);*/
+			$('#taxi_status').on('switch-change', function (e, data) {
+			 	//alert("Value Change");
+			    //alert(data.value);
+			    status = data.value;
+				if(status === 'true'){
+			    	taxi_current_status.innerHTML = "Cab is Busy";
+			    	taxi_current_status.style.color = "red";
+			    }else{
+			    	taxi_current_status.innerHTML = "Cab is Vacant";
+			    	taxi_current_status.style.color = "green";
+			    }
+			});
+		    
+	  		$('#service_status').on('switch-change', function (e, data) {
+			 	//alert("Value Change");
+			    //alert(data.value);
+			    if(data.value === true){
+			    //	taxi_current_status.innerHTML = "Busy";
+			    //	alert("Start Service Button Clicked");
+			    	device_current_status.innerHTML = "Tracking";
+			    	device_current_status.style.color = "red";
+			    	startService();
+			    }else{
+			    /*	alert(data.value);
+			    	alert("Stop Service Button Clicked");*/
+			    	device_current_status.innerHTML = "Stopped Tracking";
+			    	device_current_status.style.color = "green";
+			    	stopService(); 
+			    }
+			});
+			
+			var myService = cordova.require('cordova/plugin/myService');
+			
+			function handleSuccess(data) {
+ 				updateStatus(data);
  			}
- 			
- 			function handleError(data) {
+ 	
+ 	
+			function handleError(data) {
 				alert("Error: " + data.ErrorMessage);
  				alert(JSON.stringify(data));
-				updateView(data);
+ 				updateStatus(data);
  			}
-
-			/*
-			 * Button Handlers
-			 */ 			
- 			function getStatus() {
- 				myService.getStatus(	function(r){handleSuccess(r)},
- 										function(e){handleError(e)});
- 			}
- 			
- 			function startService() {
-				myService.startService(	function(r){
-													handleSuccess(r);
-													navigator.geolocation.getCurrentPosition(onSuccess, onError, {enableHighAccuracy:true});},
+         
+		    function startService() {
+		    //	alert("Start of Service");
+				myService.startService(	function(r){handleSuccess(r)},
 										function(e){handleError(e)});
  			}
 
  			function stopService() {
+ 			//	alert("Stop of Service");
 	 			myService.stopService(	function(r){handleSuccess(r)},
  										function(e){handleError(e)});
 			}
-
- 			function enableTimer() {
-				myService.enableTimer(	60000,
-										function(r){handleSuccess(r)},
+ 
+			function enableTimer() {
+				myService.enableTimer(	30000,
+										function(r){geolocationSend();},
 										function(e){handleError(e)});
  			}
 
  			function disableTimer() {
-	 			myService.disableTimer(	function(r){handleSuccess(r)},
- 										function(e){handleError(e)});
+			//	alert("Disabled Timer");
+				geolocationStop();
+	 			/*myService.disableTimer(	function(r){},
+ 										function(e){handleError(e)});*/
 			}
-			 			
- 			function registerForBootStart() {
-				myService.registerForBootStart(	function(r){handleSuccess(r)},
-												function(e){handleError(e)});
- 			}
+            
+            function updateStatus(data){
+	            if (data.ServiceRunning) {
+	          //  	alert("Start of Geo Tracking");
+					enableTimer();
+	            }else{
+	          //  	alert("Stop of Geo Tracking");
+					disableTimer();
+	            }
+            }		
+		   
+			function geolocationSend(){	
+			//	alert("Watch Geo");
+				watchID = navigator.geolocation.watchPosition(showCurrentLocation,errorHandler,{enableHighAccuracy: true});
+			}			
 
- 			function deregisterForBootStart() {
-				myService.deregisterForBootStart(	function(r){handleSuccess(r)},
-													function(e){handleError(e)});
- 			}
+			function showCurrentLocation(position){
+			//	alert("Send Geo");
+				   	if(status == 'false'){
+			//	   		alert("Set Status to 1");
+				   		taxi_status = 1;
+				   	}else{
+			//	   		alert("Set Status to 2");
+				   		taxi_status = 2;
+				   	}
+					var param = {};
+					param["latitude"] = position.coords.latitude;
+					param["longitude"] = position.coords.longitude;
+					param["uuid"] = device.uuid;
+					param["status"] = taxi_status;
+					var data1 = JSON.stringify([param]);
+			//		alert(data1);
+					jQuery.ajax({
+						type: "POST",
+						dataType : 'json', 
+						url : "http://nuappz.com/taxi/lib/api/tracker.inc.php",
+						data : param,
+						cache : false,
+						success : function(data1) {
+			//				alert("success");
+						},
+						error : function(data1){
+			//				alert("Fails");
+						}
+					});
+			}
 
- 			function registerForUpdates() {
-				myService.registerForUpdates(	function(r){handleSuccess(r)},
-												function(e){handleError(e)});
- 			}
+			function errorHandler(error){
+			//	  alert("Error while retrieving current position. Error code: " + error.code + ",Message: " + error.message);
+			}
 
- 			function deregisterForUpdates() {
-				myService.deregisterForUpdates(	function(r){handleSuccess(r)},
-												function(e){handleError(e)});
- 			}
-
- 			function setConfig() {
-				var helloToTxt = document.getElementById("helloToTxt");
- 				var helloToString = helloToTxt.value;
- 				var config = { 
- 								"HelloTo" : helloToString 
- 							}; 
-				myService.setConfiguration(	config,
-											function(r){handleSuccess(r)},
-											function(e){handleError(e)});
- 			}
-
-			/*
-			 * View logic
-			 */
- 			function updateView(data) {
-				var serviceBtn = document.getElementById("toggleService");
-				var serviceStatus = document.getElementById("serviceStatus");
-				serviceBtn.disabled = false;
-				if (data.ServiceRunning) {
-					serviceStatus.innerHTML = "Running";
-					serviceBtn.onclick = stopService;
-					navigator.geolocation.getCurrentPosition(onSuccess, onError, {enableHighAccuracy:true});
-					timerBtn.disabled = false;
-					//
-					/*onDeviceReady();
-					if (data.TimerEnabled) {
-						timerStatus.innerHTML = "Enabled";
-						timerBtn.onclick = disableTimer;
-					} else {
-						timerStatus.innerHTML = "Disabled";
-						timerBtn.onclick = enableTimer;
-					} */
-					
-
-					updateBtn.disabled = false;
-					updateBtn.onclick = setConfig;
-
-					refreshBtn.disabled = false;
-					refreshBtn.onclick = getStatus;
-
-				} else { 
-					serviceStatus.innerHTML = "Not running";
-					serviceBtn.onclick = startService;
-					timerBtn.disabled = true;
-					timerEnabled = false; 
-
-					updateBtn.disabled = true;
-					refreshBtn.disabled = true;
-				} 
-
-				bootBtn.disabled = false;
-				if (data.RegisteredForBootStart) {
-					bootStatus.innerHTML = "Registered";
-					bootBtn.onclick = deregisterForBootStart;
-				} else {
-					bootStatus.innerHTML = "Not registered";
-					bootBtn.onclick = registerForBootStart;
-				}
-				
-				listenBtn.disabled = false;
-				if (data.RegisteredForUpdates) {
-					listenStatus.innerHTML = "Registered";
-					listenBtn.onclick = deregisterForUpdates;
-				} else {
-					listenStatus.innerHTML = "Not registered";
-					listenBtn.onclick = registerForUpdates;
-				}
-
-				if (data.Configuration != null)
-				{
-					try {
-						var helloToTxt = document.getElementById("helloToTxt");
-						helloToTxt.value = data.Configuration.HelloTo;
-					} catch (err) {
-					}
-				}
-				
-				if (data.LatestResult != null)
-				{
-					try {
-						var resultMessage = document.getElementById("resultMessage");
-						resultMessage.innerHTML = data.LatestResult.Message;
- 					} catch (err) {
- 					}
-				}
- 			}
-
-		</script>
-    <script type="text/javascript" charset="utf-8">
-
-    // onSuccess Geolocation
-    //
-    function onSuccess(position) {
-        var element = document.getElementById('geolocation');
-        element.innerHTML = 'Latitude: '           + position.coords.latitude              + '<br />' +
-                            'Longitude: '          + position.coords.longitude             + '<br />' +
-                            'Altitude: '           + position.coords.altitude              + '<br />' +
-                            'Accuracy: '           + position.coords.accuracy              + '<br />' +
-                            'Altitude Accuracy: '  + position.coords.altitudeAccuracy      + '<br />' +
-                            'Heading: '            + position.coords.heading               + '<br />' +
-                            'Speed: '              + position.coords.speed                 + '<br />' +
-                            'Timestamp: '          + position.timestamp                    + '<br />';
-            var param = {};
-            param["taxi_id"] = "taxi_1";
-		    param["latitude"] = position.coords.latitude;
-		    param["longitude"] =position.coords.longitude;
-		    param["phone_number"] = 9940700655;
-		    param["status"] = 1;
-		    //var data1 = [param];
-		    	     
-		   	dataSend(param);
-    }
-
-    // onError Callback receives a PositionError object
-    //
-    function onError(error) {
-        alert('code: '    + error.code    + '\n' +
-              'message: ' + error.message + '\n');
-    }
-    
-    function dataSend(data1){
-    	 alert(data1);	
-    	 $.ajax({
-   		        type : 'POST',
-		        dataType : 'json',
-		        url : "http://reignsoft.in/taxi/lib/api/tracker.inc.php",
-		        data : data1,
-		        cache : false,
-		        success : function(data1) {
-		           	alert("success");
-		        },
-		        error : function(data1){
-		        	alert("Fails");
-		        }
-		    });
-    }
-    </script>
-  </head>
-  <body>
-  	<h1>MyService V3.1.0</h1>
-		
-		<table>
-			<tr>
-				<th>Service</th>
-				<td><div id="serviceStatus"></div></td>
-				<td><input disabled id="toggleService" type="button" value="toggle"/></td>
-			</tr>
-		</table>
-    <p id="geolocation">Finding geolocation...</p>
+			function geolocationStop(){
+			//	alert("Stopped Timer and Location Tracking");
+				if (watchID > 0) {
+				//	alert("Stop Geo Tracking");
+					navigator.geolocation.clearWatch(watchID);
+				//	alert("Clear Interval");
+				//	clearInterval(timerId);
+				}				
+				//exit();
+			//	return;
+			}
+	  		 </script>
   </body>
 </html>
